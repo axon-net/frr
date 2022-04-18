@@ -18,7 +18,7 @@ jobs:
     - stage: build_frr_docker_images
       script:
         - export FRR_COMMIT_HASH=$(git rev-parse --short=7 HEAD) #Avoid temp travis commit.
-        - . artifactory-ibm/frr_docker_version.sh && export FRR_IMAGE_TAG=frr:"$FRR_RELEASE"-"$FRR_UBI"-"$FRR_COMMIT_HASH"-"$FRR_SERIAL"
+        - . artifactory-ibm/frr_docker_version.sh && export FRR_IMAGE_TAG=frr:"$FRR_RELEASE"-"$FRR_UBI"-"$FRR_COMMIT_HASH"-"$FRR_SERIAL" && export FRR_TOOLS_TAG=frr:"$FRR_RELEASE"-"$FRR_UBI"-"$FRR_COMMIT_HASH"-tools-"$FRR_SERIAL"
         - echo "Test existence of docker image:" $FRR_IMAGE_TAG
         - |
           artifactory-ibm/docker.sh pull "$FRR_IMAGE_TAG" "$FRR_COMMIT_HASH"
@@ -33,7 +33,15 @@ jobs:
                 echo "ERROR building docker image" && /bin/false
               else
                 artifactory-ibm/docker.sh push "$FRR_IMAGE_TAG" "$FRR_COMMIT_HASH"
-                docker rmi "$FRR_IMAGE_TAG" # Clean all
+                artifactory-ibm/docker.sh tools "$FRR_IMAGE_TAG" "$FRR_COMMIT_HASH" "$FRR_TOOLS_TAG"
+                if [[ "$(docker images --format '{{.Tag}}'| grep "$FRR_COMMIT_HASH"  |  grep tools | wc -l)" == "0" ]]; then
+                  echo "ERROR building docker tools image" && /bin/false
+                  docker rmi "$FRR_IMAGE_TAG" # Clean
+                else
+                  artifactory-ibm/docker.sh push "$FRR_TOOLS_TAG"
+                  docker rmi "$FRR_TOOLS_TAG" # Clean
+                  docker rmi "$FRR_IMAGE_TAG" # Clean
+                fi
               fi
             fi
           fi

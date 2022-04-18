@@ -55,6 +55,16 @@ docker_pull_image(){
 	fi
 }
 
+# Add to frr base image the typical debug,dev tools
+docker_tools_image(){
+	ARTIFACTORY_PWD=artifactory-ibm
+	docker build \
+		--build-arg="FROM_IMAGE=$1" \
+		--file=$ARTIFACTORY_PWD/toolsDockerfile \
+		--tag=$3 \
+		$ARTIFACTORY_PWD
+}
+
 echo "Using:"
 echo "  DOCKER_REPO: '$DOCKER_REPO'"
 echo "  DOCKER_USER: '$DOCKER_USER'"
@@ -73,6 +83,11 @@ case $1 in
 		;;
 	"pull")
 		docker_pull_image $2
+		exit $pull_ret
+		;;
+	"tools")
+		# Create $4 tools image FROM $2
+		docker_tools_image $2 $3 $4
 		exit $pull_ret
 		;;
 	*)

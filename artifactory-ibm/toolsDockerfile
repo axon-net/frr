@@ -1,0 +1,5 @@
+ARG FROM_IMAGE
+FROM ${FROM_IMAGE}
+RUN dnf -yq update-minimal --security --sec-severity=Important --sec-severity=Critical \
+&& dnf install -yq iproute iputils tcpdump nano less iptables nftables conntrack traceroute python3 net-tools
+
