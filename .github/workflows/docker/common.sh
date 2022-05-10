@@ -1,14 +1,9 @@
-if [ -z $ARTIFACTORY_USER ]; then
-	ARTIFACTORY_USER=`git config user.email`
+if [ -z $DOCKER_USER ]; then
+	DOCKER_USER=`git config user.email`
 fi
 
 if [ -z $GIT_REF ]; then
 	GIT_REF="HEAD"
-fi
-
-if [ -z $ARTIFACTORY_APIKEY ]; then
-	echo "ERROR: please define '\$ARTIFACTORY_APIKEY'"
-	exit -1
 fi
 
 # Single place to define the list of daemons
@@ -22,4 +17,3 @@ IS_RELEASE=1
 if [ "$__TMP_IS_RELEASE" == "" ]; then
 	IS_RELEASE=0
 fi
-
