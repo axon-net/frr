@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOCKER_USER: ${{ secrets.DOCKER_USER }}
+  DOCKER_PWD: ${{ secrets.DOCKER_PWD }}
+  __DOCKER_ALLOW_PUSH: 1
+
+jobs:
+  build_frr_docker_images:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Checkout repository..."
+        uses: actions/checkout@v2
+        with:
+          path: frr
+
+      - name: "Fetch all tags (unshallow clone)..."
+        run: |
+          cd frr
+          git fetch -f && git fetch -f --tags
+
+      - name: "Build base FRR UBI-8 docker image..."
+        run: |
+          cd frr
+
+          . .github/workflows/docker/frr_docker_version.sh
+          docker/ubi-8/build.sh "$FRR_IMAGE_TAG" "$FRR_COMMIT_HASH" "$FRR_RELEASE" "$FRR_NAME" "$FRR_VENDOR"
+
+      - name: "Build FRR UBI-8 + tools docker image..."
+        run: |
+          cd frr
+          . .github/workflows/docker/frr_docker_version.sh
+          bash .github/workflows/docker/docker.sh build_tools_image "$FRR_IMAGE_TAG" "$FRR_COMMIT_HASH" "$FRR_TOOLS_TAG"
+
+      - name: "Push FRR UBI-8 + tools docker image to quay.io..."
+        run: |
+          cd frr
+          . .github/workflows/docker/frr_docker_version.sh
+          bash .github/workflows/docker/docker.sh push "$FRR_TOOLS_TAG"
